@@ -6,6 +6,7 @@ import ImageGallery from "../ImageGallery/ImageGallery";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import LoadMoreBtn from "../LoadMoreBtn/LoadMoreBtn";
 import ImageModal from "../ImageModal/ImageModal";
+import { fetchImages } from "../../services/api";
 
 export interface Image {
     id: string;
@@ -17,77 +18,66 @@ export interface Image {
     };
 }
 
-
 interface SelectedImage {
-  largeImage: string;
-  description: string;
+    largeImage: string;
+    description: string;
 }
 
-interface FetchResults {
-    results: Image[];
-    total: number;
-    total_pages: number;
-  }
 
 const App = () => {
-  const [images, setImages] = useState<Image[]>([]); 
-  const [isLoading, setIsLoading] = useState<boolean>(false); 
-  const [isError, setIsError] = useState<boolean>(false); 
-  const [query, setQuery] = useState<string>(''); 
+  const [images, setImages] = useState<Image[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isError, setIsError] = useState<boolean>(false);
+  const [query, setQuery] = useState<string>('');
   const [page, setPage] = useState<number>(1);
-  const [perPage] = useState<number>(12); 
-  const [totalPages, setTotalPages] = useState<number>(0); 
-  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null); 
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); 
-
-  const fetchImages = async (query: string, page: number, perPage: number): Promise<FetchResults> => {
-    const response = await fetch(`https://api.example.com/search?q=${query}&page=${page}&per_page=${perPage}`);
-    const data = await response.json();
-    return data;
-  };
+  const [perPage] = useState<number>(12);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [selectedImage, setSelectedImage] = useState<SelectedImage | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const getData = async () => {
-      if (!query) {
-        return;
+      if(!query) {
+        return
       }
       try {
         setIsLoading(true);
         setIsError(false);
-        const { results, total_pages } = await fetchImages(query, page, perPage);
+        const {results, total_pages} = await fetchImages (query, page, perPage);
         setImages(prev => (page === 1 ? results : [...prev, ...results]));
         setTotalPages(total_pages);
       } catch {
         setIsError(true);
-        toast.error('Something went wrong!');
+        toast.error('Something went wrong!')
       } finally {
         setIsLoading(false);
       }
     };
     getData();
-  }, [query, page, perPage]);
+  }, [query,page, perPage]);
 
-  const handleChangeQuery = (query: string) => {
+  const handleChangeQuery = (query: string): void => {
     setImages([]);
     setQuery(query);
     setPage(1);
   };
 
-  const handleLoadMore = () => {
+  const handleLoadMore = (): void => {
     setPage(prev => prev + 1);
   };
 
-  const onImageClick = (largeImage: string, description: string) => {
+  const onImageClick = (largeImage: string, description: string): void => {
     if (!isModalOpen) {
       setSelectedImage({ largeImage, description });
       setIsModalOpen(true);
     }
-  };
+  }
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedImage(null);
-  };
+  }
+
 
   return (
     <div>
@@ -96,14 +86,10 @@ const App = () => {
       <ImageGallery images={images} onImageClick={onImageClick} />
       {isError && <ErrorMessage />}
       {images.length > 0 && page < totalPages && <LoadMoreBtn onLoadMore={handleLoadMore} />}
-      {selectedImage && <ImageModal
-        isOpen={isModalOpen}
-        onRequestClose={closeModal}
-        largeImage={selectedImage.largeImage}
-        description={selectedImage.description}
-      />}
+      {selectedImage && <ImageModal isOpen={isModalOpen} onRequestClose={closeModal} 
+      largeImage={selectedImage.largeImage} description={selectedImage.description} /> }
     </div>
-  );
+  )
 };
 
 export default App;
